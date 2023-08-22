@@ -17,6 +17,20 @@ public class Account {
   @JoinColumn(nullable = false, updatable = false, name = "user_id")
   private User user;
 
+  public Account() {
+  }
+
+  public Account(AccountCurrency accountCurrency, Long amount) {
+    this.accountCurrency = accountCurrency;
+    this.amount = amount;
+  }
+
+  public Account(AccountCurrency accountCurrency, Long amount, User user) {
+    this.accountCurrency = accountCurrency;
+    this.amount = amount;
+    this.user = user;
+  }
+
   public Long getId() {
     return id;
   }
