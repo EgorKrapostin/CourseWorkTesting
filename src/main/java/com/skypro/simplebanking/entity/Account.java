@@ -31,6 +31,11 @@ public class Account {
     this.user = user;
   }
 
+  public Account(Long amount, User user) {
+    this.amount = amount;
+    this.user = user;
+  }
+
   public Long getId() {
     return id;
   }
