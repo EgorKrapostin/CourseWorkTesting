@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -47,6 +48,9 @@ public class UserControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    public static final String ADMIN_KEY = "X-SECURITY-ADMIN-KEY";
+    @Value("${app.security.admin-token}")
+    private String token;
     @BeforeEach
     void cleanData1() {
         accountRepository.deleteAll();
@@ -75,7 +79,7 @@ public class UserControllerTest {
     private DataSource dataSource;
 
     @Test
-    void createUserTest() throws Exception {
+    void createUserTestWithUserRole() throws Exception {
         User user = new User("user", passwordEncoder.encode("pass"));
         user = userRepository.save(user);
         String base64Encoded = Base64Utils.encodeToString((user.getUsername() + ":" + "pass")
@@ -89,6 +93,19 @@ public class UserControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Encoded)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.valueOf(userRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void createUserTestWithAdminRole() throws Exception {
+        JSONObject createUserRequest = new JSONObject();
+        createUserRequest.put("username", "admin");
+        createUserRequest.put("password", "pass");
+
+        mockMvc.perform(post("/user")
+                        .header(ADMIN_KEY, token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createUserRequest.toString()))
                 .andExpect(status().isOk());
     }
 

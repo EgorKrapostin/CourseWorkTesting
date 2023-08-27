@@ -1,5 +1,8 @@
 package com.skypro.simplebanking.controller;
 
+import com.skypro.simplebanking.dto.BankingUserDetails;
+import com.skypro.simplebanking.entity.Account;
+import com.skypro.simplebanking.entity.AccountCurrency;
 import com.skypro.simplebanking.entity.User;
 import com.skypro.simplebanking.repository.AccountRepository;
 import com.skypro.simplebanking.repository.UserRepository;
@@ -8,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.util.Base64Utils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -75,20 +80,27 @@ public class TransferControllerTest {
     void transferTest() throws Exception{
         User user = new User("user", passwordEncoder.encode("pass"));
         user = userRepository.save(user);
+        User user1 = new User("user1", passwordEncoder.encode("pass"));
+        user1 = userRepository.save(user);
+        Account account = new Account(AccountCurrency.USD,1l, user);
+        account = accountRepository.save(account);
+        Account account1 = new Account(AccountCurrency.USD,1l, user1);
+        account1 = accountRepository.save(account);
         String base64Encoded = Base64Utils.encodeToString((user.getUsername() + ":" + "pass")
                 .getBytes(StandardCharsets.UTF_8));
 
         JSONObject transferRequest = new JSONObject();
-        transferRequest.put("fromAccountId", 1);
-        transferRequest.put("toUserId", 2);
-        transferRequest.put("toAccountId", 4);
-        transferRequest.put("amount", 5000);
+        transferRequest.put("fromAccountId", account.getId());
+        transferRequest.put("toUserId", user.getId());
+        transferRequest.put("toAccountId", account1.getId());
+        transferRequest.put("amount", 1);
 
-        mockMvc.perform(post("/transfer/")
+        mockMvc.perform(post("/transfer")
                         .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Encoded)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.valueOf(transferRequest)))
                 .andExpect(status().isOk());
+
 
     }
 }
